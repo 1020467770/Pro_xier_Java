@@ -1,68 +1,38 @@
 package cn.sqh.JDBCutils;
 
+import com.alibaba.druid.pool.DruidDataSourceFactory;
+import javax.sql.DataSource;
 import java.io.IOException;
-import java.io.InputStream;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Properties;
-
 
 public class JDBCutils {
 
-    private static String url;
-    private static String user;
-    private static String password;
-    private static String driver;
+    private static DataSource ds;
 
     static {
-
         try {
+            Properties pro = new Properties();
 
-            Properties pro=new Properties();
+            pro.load(JDBCutils.class.getClassLoader().getResourceAsStream("druid.properties"));
 
-            ClassLoader classLoader = JDBCutils.class.getClassLoader();
-            InputStream ras = classLoader.getResourceAsStream("jdbc.properties");
-
-            pro.load(ras);
-
-            url= pro.getProperty("url");
-            user= pro.getProperty("user");
-            password= pro.getProperty("password");
-            driver= pro.getProperty("driver");
-            //System.out.println(driver);
-
-            Class.forName(driver);
-
+            ds= DruidDataSourceFactory.createDataSource(pro);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * 获取连接
-     * @return 连接对象
-     */
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(url,user,password);
+        return ds.getConnection();
     }
 
-
     public static void close(Statement stmt,Connection conn){
-        if(stmt!=null){
-            try {
-                stmt.close();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
-            }
-        }
-        if(conn!=null){
-            try {
-                conn.close();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
-            }
-        }
+        close(null,stmt,conn);
     }
 
     public static void close(ResultSet rs, Statement stmt, Connection conn){
@@ -82,10 +52,14 @@ public class JDBCutils {
         }
         if(conn!=null){
             try {
-                conn.close();
+                conn.close();//这里实际上是归还连接
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
             }
         }
+    }
+
+    public static DataSource getDataSource(){
+        return ds;
     }
 }
